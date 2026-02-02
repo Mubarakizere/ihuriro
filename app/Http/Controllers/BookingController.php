@@ -65,14 +65,25 @@ class BookingController extends Controller
         // Load the service relationship for email
         $booking->load('service');
 
-        // Send email to customer
-        Mail::to($booking->customer_email)
-            ->send(new BookingConfirmation($booking));
+        // Send emails with error handling
+        try {
+            // Send email to customer
+            \Log::info('Attempting to send email to customer: ' . $booking->customer_email);
+            Mail::to($booking->customer_email)
+                ->send(new BookingConfirmation($booking));
+            \Log::info('Customer email sent successfully');
 
-        // Send email to admin addresses
-        $adminEmails = ['divahousebeauty@gmail.com', 'info@divahousebeauty.com'];
-        Mail::to($adminEmails)
-            ->send(new BookingConfirmation($booking));
+            // Send email to admin addresses
+            $adminEmails = ['divahousebeauty@gmail.com', 'info@divahousebeauty.com'];
+            \Log::info('Attempting to send email to admins: ' . implode(', ', $adminEmails));
+            Mail::to($adminEmails)
+                ->send(new BookingConfirmation($booking));
+            \Log::info('Admin emails sent successfully');
+        } catch (\Exception $e) {
+            // Log the error but don't fail the booking
+            \Log::error('Email sending failed: ' . $e->getMessage());
+            \Log::error('Email error trace: ' . $e->getTraceAsString());
+        }
 
         return response()->json([
             'success' => true,

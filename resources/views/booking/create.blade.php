@@ -122,7 +122,8 @@
                                 <label class="block text-sm font-semibold text-[#0f2557] mb-3">Select Date</label>
                                 <div class="relative">
                                     <input type="date" name="booking_date" id="booking-date" 
-                                           class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl font-medium text-[#0f2557] focus:outline-none focus:ring-2 focus:ring-[#0f2557]/20 focus:border-[#0f2557] transition-all cursor-pointer" 
+                                           style="color-scheme: light;"
+                                           class="w-full p-4 bg-white border-2 border-slate-300 rounded-xl font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0f2557]/20 focus:border-[#0f2557] transition-all cursor-pointer" 
                                            min="{{ date('Y-m-d') }}"
                                            required>
                                     <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
@@ -271,6 +272,38 @@
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .time-slot.selected { @apply bg-[#0f2557] text-white border-[#0f2557]; }
     .category-tab.active { @apply bg-[#0f2557] text-white shadow-lg border-transparent; }
+    
+    /* Date input styling for better visibility */
+    input[type="date"] {
+        position: relative;
+        color-scheme: light;
+    }
+    
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        position: absolute;
+        right: 10px;
+        color: #64748b;
+        cursor: pointer;
+        opacity: 0.7;
+    }
+    
+    input[type="date"]::-webkit-calendar-picker-indicator:hover {
+        opacity: 1;
+    }
+    
+    /* Ensure date text is visible */
+    input[type="date"]::-webkit-datetime-edit-text,
+    input[type="date"]::-webkit-datetime-edit-month-field,
+    input[type="date"]::-webkit-datetime-edit-day-field,
+    input[type="date"]::-webkit-datetime-edit-year-field {
+        color: #0f172a;
+        font-weight: 500;
+    }
+    
+    /* Ensure the date value is visible when set */
+    input[type="date"]:valid {
+        color: #0f172a !important;
+    }
 </style>
 @endpush
 
@@ -489,7 +522,10 @@
 
     function updateSummary() {
         document.getElementById('summary-service').textContent = selectedService.name;
-        document.getElementById('summary-date').textContent = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+        // Fix date parsing to avoid timezone issues
+        const dateParts = selectedDate.split('-');
+        const dateObj = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+        document.getElementById('summary-date').textContent = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
         document.getElementById('summary-time').textContent = selectedTime.display;
         
         const countryCode = document.getElementById('country-code').value;
