@@ -111,7 +111,11 @@
                         <div class="pt-4 border-t border-slate-50 flex items-center justify-between mt-auto">
                             <div class="font-bold text-[#0f2557]">
                                 @if($service->price_rwf > 0)
-                                    {{ number_format($service->price_rwf) }} <span class="text-xs font-normal text-slate-400">RWF</span>
+                                    <span class="price-display" 
+                                          data-rwf="{{ $service->price_rwf }}" 
+                                          data-usd="{{ $service->price_usd }}">
+                                        {{ number_format($service->price_rwf) }} RWF
+                                    </span>
                                 @else
                                     <span class="text-xs text-slate-500">Variable</span>
                                 @endif

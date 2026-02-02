@@ -89,7 +89,9 @@
                                                         </div>
                                                     </div>
                                                     <p class="text-xs text-slate-500 mt-1 mb-2">{{ $service->formatted_duration }}</p>
-                                                    <div class="font-bold text-[#0f2557]">{{ $service->formatted_price_rwf }}</div>
+                                                    <div class="font-bold text-[#0f2557] price-display" 
+                                                         data-rwf="{{ $service->price_rwf }}" 
+                                                         data-usd="{{ $service->price_usd }}">{{ $service->formatted_price_rwf }}</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -314,6 +316,22 @@
     let selectedDate = null;
     let selectedTime = null;
 
+    // Override global setCurrency to update booking specific elements
+    const originalSetCurrency = window.setCurrency;
+    window.setCurrency = function(currency) {
+        if (typeof originalSetCurrency === 'function') {
+            originalSetCurrency(currency);
+        } else {
+            // Fallback if original isn't defined yet (though it should be)
+            localStorage.setItem('currency', currency);
+            location.reload(); 
+        }
+        
+        // Update booking specific elements
+        if (typeof updateRunningTotal === 'function') updateRunningTotal();
+        if (currentStep === 4 && typeof updateSummary === 'function') updateSummary();
+    };
+
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
         // Pre-selection check
@@ -389,10 +407,22 @@
         selectedService = {
             id: input.value,
             name: input.dataset.name,
+            priceRwf: parseFloat(input.dataset.priceRwf),
+            priceUsd: parseFloat(input.dataset.priceUsd),
             priceFormatted: input.dataset.priceFormatted
         };
-        document.getElementById('running-total').textContent = selectedService.priceFormatted;
+        updateRunningTotal();
         validateStep();
+    }
+
+    function updateRunningTotal() {
+        if (!selectedService) return;
+        const currency = localStorage.getItem('currency') || 'RWF';
+        if (currency === 'USD') {
+            document.getElementById('running-total').textContent = '$' + selectedService.priceUsd.toFixed(2);
+        } else {
+            document.getElementById('running-total').textContent = new Intl.NumberFormat().format(selectedService.priceRwf) + ' RWF';
+        }
     }
 
     function filterCategory(category, btn) {
@@ -532,7 +562,14 @@
         const phone = document.getElementById('customer-phone').value;
         
         document.getElementById('summary-name').textContent = document.getElementById('customer-name').value;
-        document.getElementById('summary-price').textContent = selectedService.priceFormatted;
+        
+        // Format price based on current currency
+        const currency = localStorage.getItem('currency') || 'RWF';
+        if (currency === 'USD') {
+            document.getElementById('summary-price').textContent = '$' + selectedService.priceUsd.toFixed(2);
+        } else {
+            document.getElementById('summary-price').textContent = new Intl.NumberFormat().format(selectedService.priceRwf) + ' RWF';
+        }
     }
 
     function submitBooking(e) {
