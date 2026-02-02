@@ -7,6 +7,8 @@ use App\Models\Service;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\BookingConfirmation;
 
 class BookingController extends Controller
 {
@@ -59,6 +61,18 @@ class BookingController extends Controller
             'total_price_rwf' => $service->price_rwf,
             'status' => 'pending',
         ]);
+
+        // Load the service relationship for email
+        $booking->load('service');
+
+        // Send email to customer
+        Mail::to($booking->customer_email)
+            ->send(new BookingConfirmation($booking));
+
+        // Send email to admin addresses
+        $adminEmails = ['divahousebeauty@gmail.com', 'info@divahousebeauty.com'];
+        Mail::to($adminEmails)
+            ->send(new BookingConfirmation($booking));
 
         return response()->json([
             'success' => true,
