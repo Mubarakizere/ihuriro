@@ -31,6 +31,7 @@ class BookingController extends Controller
      */
     public function store(Request $request)
     {
+        \Log::info('Booking Request Initiated', $request->all());
         $validator = Validator::make($request->all(), [
             'service_id' => 'required|exists:services,id',
             'customer_name' => 'required|string|max:255',
@@ -42,6 +43,7 @@ class BookingController extends Controller
         ]);
 
         if ($validator->fails()) {
+            \Log::warning('Booking Validation Failed', $validator->errors()->toArray());
             return response()->json([
                 'success' => false,
                 'errors' => $validator->errors(),
@@ -67,22 +69,25 @@ class BookingController extends Controller
 
         // Send emails with error handling
         try {
+            $ref = $booking->booking_reference;
+            \Log::info("[$ref] Starting email notifications");
+
             // Send email to customer
-            \Log::info('Attempting to send email to customer: ' . $booking->customer_email);
+            \Log::info("[$ref] Attempting to send confirmation email to customer: " . $booking->customer_email);
             Mail::to($booking->customer_email)
                 ->send(new BookingConfirmation($booking));
-            \Log::info('Customer email sent successfully');
+            \Log::info("[$ref] Customer email sent successfully");
 
             // Send email to admin addresses
             $adminEmails = ['divahousebeauty@gmail.com', 'info@divahousebeauty.com'];
-            \Log::info('Attempting to send email to admins: ' . implode(', ', $adminEmails));
+            \Log::info("[$ref] Attempting to send notification email to admins: " . implode(', ', $adminEmails));
             Mail::to($adminEmails)
                 ->send(new BookingConfirmation($booking));
-            \Log::info('Admin emails sent successfully');
+            \Log::info("[$ref] Admin emails sent successfully");
         } catch (\Exception $e) {
             // Log the error but don't fail the booking
-            \Log::error('Email sending failed: ' . $e->getMessage());
-            \Log::error('Email error trace: ' . $e->getTraceAsString());
+            \Log::error("[$ref] Email sending failed: " . $e->getMessage());
+            \Log::error("[$ref] Email error trace: " . $e->getTraceAsString());
         }
 
         return response()->json([
