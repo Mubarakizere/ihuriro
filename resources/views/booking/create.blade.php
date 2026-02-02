@@ -7,7 +7,7 @@
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <!-- Booking Wizard Container -->
-        <div class="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden min-h-[600px] flex flex-col relative">
+        <div class="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden h-[85vh] sm:h-[calc(100vh-6rem)] min-h-[550px] flex flex-col relative">
             
             <!-- Header & Progress -->
             <div class="pt-8 pb-6 px-6 sm:px-10 bg-white z-20">
@@ -37,7 +37,7 @@
                         </div>
 
                         <!-- Sticky Search & Filter -->
-                        <div class="sticky top-0 bg-white z-10 pb-4">
+                        <div class="sticky top-0 bg-white/95 backdrop-blur-sm z-10 pb-4 shadow-sm -mx-6 px-6 sm:-mx-10 sm:px-10 pt-2 mb-4">
                             <!-- Search Bar -->
                             <div class="relative mb-4">
                                 <input type="text" id="service-search" placeholder="Search services (e.g. Fade, Manicure)..." 
@@ -64,7 +64,7 @@
                             @foreach($services as $category => $categoryServices)
                             <div class="category-group {{ !$loop->first ? 'hidden' : '' }}" data-category="{{ $category }}">
                                 <h3 class="font-display font-bold text-[#0f2557] mb-4 pl-1 hidden category-title">{{ ucfirst($category) }}</h3>
-                                <div class="grid sm:grid-cols-2 gap-4">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                                     @foreach($categoryServices as $service)
                                     <label class="group relative cursor-pointer service-item" data-name="{{ strtolower($service->name) }}">
                                         <input type="radio" name="service_id" value="{{ $service->id }}" 
