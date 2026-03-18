@@ -13,14 +13,43 @@
     @vite(['resources/css/app.css'])
 
     <style>
+        * { box-sizing: border-box; }
+
         body {
             font-family: 'Inter', sans-serif;
             background: #f1f5f9;
+            margin: 0;
+            padding: 0;
         }
 
-        .sidebar {
+        /* Sidebar */
+        .admin-sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100vh;
             background: linear-gradient(180deg, #0f2557 0%, #051638 100%);
+            z-index: 50;
+            transform: translateX(-100%);
             transition: transform 0.3s ease;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .admin-sidebar.open {
+            transform: translateX(0);
+        }
+
+        /* Desktop: sidebar always visible */
+        @media (min-width: 1024px) {
+            .admin-sidebar {
+                transform: translateX(0);
+            }
+            .admin-main {
+                margin-left: 260px;
+            }
         }
 
         .sidebar-link {
@@ -33,6 +62,7 @@
             font-weight: 500;
             font-size: 0.875rem;
             transition: all 0.2s ease;
+            text-decoration: none;
         }
 
         .sidebar-link:hover {
@@ -46,30 +76,7 @@
             box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
         }
 
-        .topbar {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .content-card {
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 1rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-        }
-
-        @media (max-width: 1024px) {
-            .sidebar {
-                transform: translateX(-100%);
-                position: fixed;
-                z-index: 50;
-            }
-            .sidebar.open {
-                transform: translateX(0);
-            }
-        }
-
+        /* Overlay */
         .sidebar-overlay {
             display: none;
             position: fixed;
@@ -80,6 +87,21 @@
 
         .sidebar-overlay.open {
             display: block;
+        }
+
+        /* Topbar */
+        .topbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        /* Card */
+        .content-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
         }
 
         @keyframes fadeIn {
@@ -94,117 +116,119 @@
     @stack('styles')
 </head>
 <body class="antialiased">
-    <div class="flex min-h-screen">
-        <!-- Sidebar Overlay (mobile) -->
-        <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <!-- Sidebar Overlay (mobile) -->
+    <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-        <!-- Sidebar -->
-        <aside id="sidebar" class="sidebar w-64 min-h-screen flex flex-col fixed lg:sticky top-0 h-screen">
-            <!-- Logo -->
-            <div class="p-6 pb-4">
-                <a href="{{ route('admin.dashboard') }}" class="block">
-                    <h1 class="text-2xl font-bold text-white tracking-tight" style="font-family: 'Outfit', sans-serif;">IHURIRO</h1>
-                    <span class="text-xs font-medium text-blue-300 tracking-widest uppercase">Admin Panel</span>
-                </a>
-            </div>
-
-            <!-- Nav -->
-            <nav class="flex-1 px-4 space-y-1 mt-2">
-                <a href="{{ route('admin.dashboard') }}"
-                   class="sidebar-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
-                    </svg>
-                    Dashboard
-                </a>
-
-                <a href="{{ route('admin.services.index') }}"
-                   class="sidebar-link {{ request()->routeIs('admin.services.*') ? 'active' : '' }}">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                    </svg>
-                    Services
-                </a>
-            </nav>
-
-            <!-- Bottom section -->
-            <div class="p-4 mt-auto border-t border-white/10">
-                <a href="{{ route('home') }}" target="_blank" class="sidebar-link text-xs">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                    </svg>
-                    View Website
-                </a>
-
-                <div class="flex items-center gap-3 px-3 py-3 mt-2">
-                    <div class="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-200 text-sm font-bold">
-                        {{ substr(Auth::user()->name, 0, 1) }}
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-white truncate">{{ Auth::user()->name }}</p>
-                        <p class="text-xs text-blue-300 truncate">{{ Auth::user()->email }}</p>
-                    </div>
-                </div>
-            </div>
-        </aside>
-
-        <!-- Main Content -->
-        <div class="flex-1 lg:ml-0 flex flex-col min-h-screen">
-            <!-- Top Bar -->
-            <header class="topbar sticky top-0 z-30 px-4 lg:px-8 py-4">
-                <div class="flex items-center justify-between">
-                    <!-- Mobile menu toggle -->
-                    <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-lg hover:bg-slate-100 transition-colors">
-                        <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                        </svg>
-                    </button>
-
-                    <!-- Page Title -->
-                    <h2 class="text-lg font-bold text-[#0f2557]" style="font-family: 'Outfit', sans-serif;">
-                        @yield('page-title', 'Dashboard')
-                    </h2>
-
-                    <!-- Right actions -->
-                    <div class="flex items-center gap-3">
-                        <form method="POST" action="{{ route('admin.logout') }}">
-                            @csrf
-                            <button type="submit" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                                </svg>
-                                Logout
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </header>
-
-            <!-- Page Content -->
-            <main class="flex-1 p-4 lg:p-8 animate-in">
-                <!-- Flash Messages -->
-                @if(session('success'))
-                    <div class="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3">
-                        <svg class="w-5 h-5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <span class="text-emerald-700 text-sm font-medium">{{ session('success') }}</span>
-                    </div>
-                @endif
-
-                @if(session('error'))
-                    <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
-                        <svg class="w-5 h-5 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <span class="text-red-700 text-sm font-medium">{{ session('error') }}</span>
-                    </div>
-                @endif
-
-                @yield('content')
-            </main>
+    <!-- Sidebar -->
+    <aside id="sidebar" class="admin-sidebar">
+        <!-- Logo -->
+        <div class="p-6 pb-4">
+            <a href="{{ route('admin.dashboard') }}" style="text-decoration:none;">
+                <h1 style="font-family:'Outfit',sans-serif; font-size:1.5rem; font-weight:700; color:white; margin:0;">IHURIRO</h1>
+                <span style="font-size:0.7rem; font-weight:500; color:#93c5fd; letter-spacing:0.1em; text-transform:uppercase;">Admin Panel</span>
+            </a>
         </div>
+
+        <!-- Nav -->
+        <nav style="flex:1; padding:0 1rem; margin-top:0.5rem;">
+            <a href="{{ route('admin.dashboard') }}"
+               class="sidebar-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:20px;height:20px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                </svg>
+                Dashboard
+            </a>
+
+            <a href="{{ route('admin.services.index') }}"
+               class="sidebar-link {{ request()->routeIs('admin.services.*') ? 'active' : '' }}" style="margin-top:0.25rem;">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:20px;height:20px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                </svg>
+                Services
+            </a>
+        </nav>
+
+        <!-- Bottom section -->
+        <div style="padding:1rem; margin-top:auto; border-top:1px solid rgba(255,255,255,0.1);">
+            <a href="{{ route('home') }}" target="_blank" class="sidebar-link" style="font-size:0.75rem;">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:16px;height:16px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                </svg>
+                View Website
+            </a>
+
+            <div style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem;">
+                <div style="width:32px; height:32px; border-radius:50%; background:rgba(59,130,246,0.2); display:flex; align-items:center; justify-content:center; color:#bfdbfe; font-size:0.875rem; font-weight:700;">
+                    {{ substr(Auth::user()->name, 0, 1) }}
+                </div>
+                <div style="min-width:0; flex:1;">
+                    <p style="font-size:0.875rem; font-weight:500; color:white; margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ Auth::user()->name }}</p>
+                    <p style="font-size:0.75rem; color:#93c5fd; margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ Auth::user()->email }}</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="admin-main" style="min-height:100vh; display:flex; flex-direction:column;">
+        <!-- Top Bar -->
+        <header class="topbar" style="position:sticky; top:0; z-index:30; padding:1rem 1.5rem;">
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+                <!-- Mobile menu toggle -->
+                <button onclick="toggleSidebar()" style="padding:0.5rem; border-radius:0.5rem; border:none; background:none; cursor:pointer; display:block;" class="lg-hide-btn">
+                    <svg style="width:24px;height:24px;color:#475569;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+
+                <!-- Page Title -->
+                <h2 style="font-size:1.125rem; font-weight:700; color:#0f2557; font-family:'Outfit',sans-serif; margin:0;">
+                    @yield('page-title', 'Dashboard')
+                </h2>
+
+                <!-- Logout -->
+                <form method="POST" action="{{ route('admin.logout') }}" style="margin:0;">
+                    @csrf
+                    <button type="submit" style="display:flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; font-size:0.875rem; font-weight:500; color:#64748b; background:none; border:none; border-radius:0.5rem; cursor:pointer; transition:all 0.2s;">
+                        <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                        Logout
+                    </button>
+                </form>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <main style="flex:1; padding:1.5rem;" class="animate-in">
+            <!-- Flash Messages -->
+            @if(session('success'))
+                <div style="margin-bottom:1.5rem; padding:1rem; background:#ecfdf5; border:1px solid #a7f3d0; border-radius:0.75rem; display:flex; align-items:center; gap:0.75rem;">
+                    <svg style="width:20px;height:20px;color:#059669;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span style="color:#047857; font-size:0.875rem; font-weight:500;">{{ session('success') }}</span>
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div style="margin-bottom:1.5rem; padding:1rem; background:#fef2f2; border:1px solid #fecaca; border-radius:0.75rem; display:flex; align-items:center; gap:0.75rem;">
+                    <svg style="width:20px;height:20px;color:#dc2626;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span style="color:#b91c1c; font-size:0.875rem; font-weight:500;">{{ session('error') }}</span>
+                </div>
+            @endif
+
+            @yield('content')
+        </main>
     </div>
+
+    <style>
+        @media (min-width: 1024px) {
+            .lg-hide-btn { display: none !important; }
+        }
+    </style>
 
     <script>
         function toggleSidebar() {
