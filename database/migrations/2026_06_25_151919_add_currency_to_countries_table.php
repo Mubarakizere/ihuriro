@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('countries', function (Blueprint $table) {
-            $table->string('currency', 10)->default('RWF')->after('code');
-        });
+        if (!Schema::hasColumn('countries', 'currency')) {
+            Schema::table('countries', function (Blueprint $table) {
+                $table->string('currency', 10)->default('RWF')->after('code');
+            });
+        }
     }
 
     /**
@@ -21,8 +23,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('countries', function (Blueprint $table) {
-            $table->dropColumn('currency');
-        });
+        if (Schema::hasColumn('countries', 'currency')) {
+            Schema::table('countries', function (Blueprint $table) {
+                $table->dropColumn('currency');
+            });
+        }
     }
 };

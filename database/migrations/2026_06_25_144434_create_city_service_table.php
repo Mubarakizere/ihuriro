@@ -11,15 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('city_service', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('city_id')->constrained()->onDelete('cascade');
-            $table->foreignId('service_id')->constrained()->onDelete('cascade');
-            $table->decimal('price_rwf', 10, 2)->nullable();
-            $table->timestamps();
+        if (!Schema::hasTable('city_service')) {
+            Schema::create('city_service', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('city_id')->constrained()->onDelete('cascade');
+                $table->foreignId('service_id')->constrained()->onDelete('cascade');
+                $table->decimal('price_rwf', 10, 2)->nullable();
+                $table->timestamps();
 
-            $table->unique(['city_id', 'service_id']);
-        });
+                $table->unique(['city_id', 'service_id']);
+            });
+        }
     }
 
     /**

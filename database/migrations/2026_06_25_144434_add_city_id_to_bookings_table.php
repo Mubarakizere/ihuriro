@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('bookings', function (Blueprint $table) {
-            $table->foreignId('city_id')->nullable()->constrained()->onDelete('set null');
-        });
+        if (!Schema::hasColumn('bookings', 'city_id')) {
+            Schema::table('bookings', function (Blueprint $table) {
+                $table->foreignId('city_id')->nullable()->constrained()->onDelete('set null');
+            });
+        }
     }
 
     /**
@@ -21,9 +23,11 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('bookings', function (Blueprint $table) {
-            $table->dropForeign(['city_id']);
-            $table->dropColumn('city_id');
-        });
+        if (Schema::hasColumn('bookings', 'city_id')) {
+            Schema::table('bookings', function (Blueprint $table) {
+                $table->dropForeign(['city_id']);
+                $table->dropColumn('city_id');
+            });
+        }
     }
 };

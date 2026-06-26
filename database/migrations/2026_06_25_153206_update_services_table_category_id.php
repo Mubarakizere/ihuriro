@@ -12,25 +12,32 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('services', function (Blueprint $table) {
-            $table->foreignId('category_id')->nullable()->constrained('categories')->onDelete('cascade')->after('description');
-        });
+        if (!Schema::hasColumn('services', 'category_id')) {
+            Schema::table('services', function (Blueprint $table) {
+                $table->foreignId('category_id')->nullable()->constrained('categories')->onDelete('cascade')->after('description');
+            });
+        }
 
-        $categories = DB::table('categories')->pluck('id', 'slug')->toArray();
+        // Migrate data from 'category' string column to 'category_id' foreign key
+        if (Schema::hasColumn('services', 'category') && Schema::hasColumn('services', 'category_id')) {
+            $categories = DB::table('categories')->pluck('id', 'slug')->toArray();
 
-        DB::table('services')->orderBy('id')->chunk(100, function ($services) use ($categories) {
-            foreach ($services as $service) {
-                if (isset($categories[$service->category])) {
-                    DB::table('services')->where('id', $service->id)->update([
-                        'category_id' => $categories[$service->category]
-                    ]);
+            DB::table('services')->orderBy('id')->chunk(100, function ($services) use ($categories) {
+                foreach ($services as $service) {
+                    if (isset($service->category) && isset($categories[$service->category])) {
+                        DB::table('services')->where('id', $service->id)->update([
+                            'category_id' => $categories[$service->category]
+                        ]);
+                    }
                 }
-            }
-        });
+            });
+        }
 
-        Schema::table('services', function (Blueprint $table) {
-            $table->dropColumn('category');
-        });
+        if (Schema::hasColumn('services', 'category')) {
+            Schema::table('services', function (Blueprint $table) {
+                $table->dropColumn('category');
+            });
+        }
     }
 
     /**
@@ -38,24 +45,30 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('services', function (Blueprint $table) {
-            $table->string('category')->nullable()->after('description');
-        });
+        if (!Schema::hasColumn('services', 'category')) {
+            Schema::table('services', function (Blueprint $table) {
+                $table->string('category')->nullable()->after('description');
+            });
+        }
 
-        $categories = DB::table('categories')->pluck('slug', 'id')->toArray();
-        DB::table('services')->orderBy('id')->chunk(100, function ($services) use ($categories) {
-            foreach ($services as $service) {
-                if ($service->category_id && isset($categories[$service->category_id])) {
-                    DB::table('services')->where('id', $service->id)->update([
-                        'category' => $categories[$service->category_id]
-                    ]);
+        if (Schema::hasColumn('services', 'category') && Schema::hasColumn('services', 'category_id')) {
+            $categories = DB::table('categories')->pluck('slug', 'id')->toArray();
+            DB::table('services')->orderBy('id')->chunk(100, function ($services) use ($categories) {
+                foreach ($services as $service) {
+                    if ($service->category_id && isset($categories[$service->category_id])) {
+                        DB::table('services')->where('id', $service->id)->update([
+                            'category' => $categories[$service->category_id]
+                        ]);
+                    }
                 }
-            }
-        });
+            });
+        }
 
-        Schema::table('services', function (Blueprint $table) {
-            $table->dropForeign(['category_id']);
-            $table->dropColumn('category_id');
-        });
+        if (Schema::hasColumn('services', 'category_id')) {
+            Schema::table('services', function (Blueprint $table) {
+                $table->dropForeign(['category_id']);
+                $table->dropColumn('category_id');
+            });
+        }
     }
 };
