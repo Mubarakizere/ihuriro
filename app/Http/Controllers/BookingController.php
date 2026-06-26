@@ -1,0 +1,182 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Booking;
+use App\Models\Service;
+use App\Models\Country;
+use App\Models\City;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\BookingConfirmation;
+
+use Illuminate\Support\Facades\Auth;
+
+class BookingController extends Controller
+{
+    /**
+     * Show the booking form
+     */
+    public function create(Request $request)
+    {
+        $countries = Country::where('is_active', true)
+            ->with(['cities' => function($q) {
+                $q->where('is_active', true)->orderBy('name');
+            }])
+            ->orderBy('name')
+            ->get();
+
+        $categories = \App\Models\Category::whereHas('services', function($q) {
+                $q->active();
+            })
+            ->with(['services' => function($q) {
+                $q->active()->orderBy('sort_order')->with('cities.country');
+            }])
+            ->get();
+        $selectedServiceSlug = $request->get('service');
+        $selectedService = $selectedServiceSlug 
+            ? Service::where('slug', $selectedServiceSlug)->active()->first() 
+            : null;
+        
+        $user = Auth::user();
+
+        return view('booking.create', compact('categories', 'countries', 'selectedService', 'user'));
+    }
+
+    /**
+     * Store a new booking
+     */
+    public function store(Request $request)
+    {
+        \Log::info('Booking Request Initiated', $request->all());
+        $validator = Validator::make($request->all(), [
+            'service_id' => 'required|exists:services,id',
+            'city_id' => 'required|exists:cities,id',
+            'customer_name' => 'required|string|max:255',
+            'customer_email' => 'required|email|max:255',
+            'customer_phone' => 'required|string|max:20',
+            'booking_date' => 'required|date|after_or_equal:today',
+            'booking_time' => 'required|string',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        if ($validator->fails()) {
+            \Log::warning('Booking Validation Failed', $validator->errors()->toArray());
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $service = Service::findOrFail($request->service_id);
+        $city = City::findOrFail($request->city_id);
+        
+        $priceRwf = $service->getPriceForCity($city);
+
+        $booking = Booking::create([
+            'service_id' => $service->id,
+            'city_id' => $city->id,
+            'customer_name' => $request->customer_name,
+            'customer_email' => $request->customer_email,
+            'customer_phone' => $request->customer_phone,
+            'booking_date' => $request->booking_date,
+            'booking_time' => $request->booking_time,
+            'notes' => $request->notes,
+            'total_price_rwf' => $priceRwf,
+            'status' => 'pending',
+            'user_id' => Auth::id(),
+        ]);
+
+        // Load the service relationship for email
+        $booking->load('service');
+
+        // Send emails with error handling
+        try {
+            $ref = $booking->booking_reference;
+            \Log::info("[$ref] Starting email notifications");
+
+            // Send email to customer
+            \Log::info("[$ref] Attempting to send confirmation email to customer: " . $booking->customer_email);
+            Mail::to($booking->customer_email)
+                ->send(new BookingConfirmation($booking));
+            \Log::info("[$ref] Customer email sent successfully");
+
+            // Send email to admin addresses
+            $adminEmails = ['divahousebeauty@gmail.com', 'info@divahousebeauty.com'];
+            \Log::info("[$ref] Attempting to send notification email to admins: " . implode(', ', $adminEmails));
+            Mail::to($adminEmails)
+                ->send(new BookingConfirmation($booking));
+            \Log::info("[$ref] Admin emails sent successfully");
+        } catch (\Exception $e) {
+            // Log the error but don't fail the booking
+            \Log::error("[$ref] Email sending failed: " . $e->getMessage());
+            \Log::error("[$ref] Email error trace: " . $e->getTraceAsString());
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Booking confirmed successfully!',
+            'booking' => [
+                'reference' => $booking->booking_reference,
+                'service' => $service->name,
+                'date' => $booking->formatted_date,
+                'time' => $booking->formatted_time,
+                'price' => number_format($priceRwf, 0, '.', ',') . ' RWF',
+            ],
+        ]);
+    }
+
+    /**
+     * Get available time slots for a date
+     */
+    public function getAvailableSlots(Request $request)
+    {
+        $date = $request->get('date');
+        $serviceId = $request->get('service_id');
+
+        if (!$date || !$serviceId) {
+            return response()->json(['slots' => []]);
+        }
+
+        // Business hours: 8 AM to 6 PM
+        $slots = [];
+        $startHour = 8;
+        $endHour = 18;
+
+        // Get booked slots for this date
+        $bookedTimes = Booking::where('booking_date', $date)
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->pluck('booking_time')
+            ->map(function ($time) {
+                return Carbon::parse($time)->format('H:i');
+            })
+            ->toArray();
+
+        for ($hour = $startHour; $hour < $endHour; $hour++) {
+            foreach (['00', '30'] as $minute) {
+                $timeSlot = sprintf('%02d:%s', $hour, $minute);
+                $displayTime = Carbon::createFromFormat('H:i', $timeSlot)->format('g:i A');
+                
+                $isAvailable = !in_array($timeSlot, $bookedTimes);
+                
+                // Don't show past times for today
+                if ($date === now()->toDateString()) {
+                    $slotTime = Carbon::createFromFormat('Y-m-d H:i', "$date $timeSlot");
+                    if ($slotTime->isPast()) {
+                        $isAvailable = false;
+                    }
+                }
+
+                $slots[] = [
+                    'time' => $timeSlot,
+                    'display' => $displayTime,
+                    'available' => $isAvailable,
+                ];
+            }
+        }
+
+        return response()->json(['slots' => $slots]);
+    }
+}
