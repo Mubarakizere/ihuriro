@@ -7,7 +7,7 @@
 <!-- Hero Section -->
 <section class="relative pt-32 pb-16 overflow-hidden bg-slate-900">
     <div class="absolute inset-0 z-0">
-        <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80" 
+        <img src="{{ $servicesHeroImage ? asset('storage/' . $servicesHeroImage) : 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80' }}" 
              alt="Luxury Salon Background" 
              class="w-full h-full object-cover opacity-40 mix-blend-overlay">
         <div class="absolute inset-0 bg-gradient-to-t from-[#fafafc] via-slate-900/60 to-transparent"></div>

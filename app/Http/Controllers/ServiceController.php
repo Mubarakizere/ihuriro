@@ -60,7 +60,10 @@ class ServiceController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('services.index', compact('categories', 'countries', 'selectedCity', 'selectedCountry'));
+        // Get the services hero image from settings
+        $servicesHeroImage = \App\Models\Setting::get('services_hero_image');
+
+        return view('services.index', compact('categories', 'countries', 'selectedCity', 'selectedCountry', 'servicesHeroImage'));
     }
 
     /**

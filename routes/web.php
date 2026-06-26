@@ -57,5 +57,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('bookings', App\Http\Controllers\Admin\BookingController::class);
         
         Route::patch('bookings/{booking}/status', [App\Http\Controllers\Admin\BookingController::class, 'updateStatus'])->name('bookings.status');
+
+        // Site Settings
+        Route::get('settings', [App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
+        Route::put('settings', [App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');
     });
 });
