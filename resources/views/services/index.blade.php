@@ -78,7 +78,7 @@
                             class="w-full px-6 py-5 flex items-center justify-between bg-white hover:bg-slate-50 transition-colors focus:outline-none">
                         <div class="flex items-center gap-4 text-left">
                             @if($category->image_path)
-                                <img src="{{ asset('storage/' . $category->image_path) }}" alt="{{ $category->name }}" class="w-12 h-12 rounded-full object-cover border border-slate-100 shadow-sm hidden sm:block">
+                                <img src="{{ asset($category->image_path) }}" alt="{{ $category->name }}" class="w-12 h-12 rounded-full object-cover border border-slate-100 shadow-sm hidden sm:block">
                             @endif
                             <div>
                                 <h2 class="font-display text-xl font-bold text-slate-900">{{ $category->name }}</h2>
