@@ -63,6 +63,24 @@
                 <a href="{{ route('services.index') }}" class="text-lg font-medium py-3 border-b border-gray-100 text-[#0f2557]">Services</a>
                 <a href="https://divahousebeauty.com" target="_blank" class="text-lg font-medium py-3 border-b border-gray-100 text-[#0f2557]">Shopping</a>
                 <a href="{{ route('booking.create') }}" class="text-lg font-medium py-3 border-b border-gray-100 text-[#0f2557]">Book Now</a>
+                
+                @auth
+                    @if(Auth::user()->is_admin)
+                        <a href="{{ route('admin.dashboard') }}" class="text-lg font-medium py-3 border-b border-gray-100 text-[#0f2557]">Admin Dashboard</a>
+                        <form action="{{ route('admin.logout') }}" method="POST" class="border-b border-gray-100">
+                            @csrf
+                            <button type="submit" class="w-full text-left text-lg font-medium py-3 text-red-600">Logout</button>
+                        </form>
+                    @else
+                        <a href="{{ route('customer.dashboard') }}" class="text-lg font-medium py-3 border-b border-gray-100 text-[#0f2557]">My Dashboard</a>
+                        <form action="{{ route('logout') }}" method="POST" class="border-b border-gray-100">
+                            @csrf
+                            <button type="submit" class="w-full text-left text-lg font-medium py-3 text-red-600">Logout</button>
+                        </form>
+                    @endif
+                @else
+                    <a href="{{ route('login') }}" class="text-lg font-medium py-3 border-b border-gray-100 text-[#0f2557]">Login</a>
+                @endauth
             </nav>
             <div class="mt-8">
                 <a href="{{ route('booking.create') }}" class="btn-primary block text-center">

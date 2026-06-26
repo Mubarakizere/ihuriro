@@ -29,15 +29,27 @@
 
                 @auth
                     <div class="hidden md:flex items-center gap-4">
-                        <a href="{{ route('customer.dashboard') }}" class="text-sm font-medium text-[#0f2557] hover:underline">
-                            My Dashboard
-                        </a>
-                        <form action="{{ route('logout') }}" method="POST">
-                            @csrf
-                            <button type="submit" class="text-sm font-medium text-red-600 hover:text-red-800">
-                                Logout
-                            </button>
-                        </form>
+                        @if(Auth::user()->is_admin)
+                            <a href="{{ route('admin.dashboard') }}" class="text-sm font-medium text-[#0f2557] hover:underline">
+                                Admin Dashboard
+                            </a>
+                            <form action="{{ route('admin.logout') }}" method="POST">
+                                @csrf
+                                <button type="submit" class="text-sm font-medium text-red-600 hover:text-red-800">
+                                    Logout
+                                </button>
+                            </form>
+                        @else
+                            <a href="{{ route('customer.dashboard') }}" class="text-sm font-medium text-[#0f2557] hover:underline">
+                                My Dashboard
+                            </a>
+                            <form action="{{ route('logout') }}" method="POST">
+                                @csrf
+                                <button type="submit" class="text-sm font-medium text-red-600 hover:text-red-800">
+                                    Logout
+                                </button>
+                            </form>
+                        @endif
                     </div>
                 @endauth
                 
