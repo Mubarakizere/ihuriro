@@ -70,28 +70,27 @@
                     </div>
                     
                     <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100">
-                        <div class="flex items-center gap-3 mb-2">
+                        <div class="flex items-center gap-3 mb-3">
                             <svg class="w-6 h-6 text-[#0f2557]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
-                            <span class="text-sm text-slate-500">Price</span>
+                            <span class="text-sm text-slate-500">Pricing by Location</span>
                         </div>
-                        <div class="font-display text-2xl font-bold text-[#0f2557] price-display" 
-                             data-rwf="{{ $service->price_rwf }}" 
-                             data-usd="{{ $service->price_usd }}">
-                            {{ $service->formatted_price_rwf }}
-                        </div>
-                        <div class="text-sm text-slate-500 mt-1">
-                            ≈ {{ $service->formatted_price_usd }}
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Currency Toggle -->
-                <div class="mb-8">
-                    <div class="currency-toggle">
-                        <button class="currency-btn active" data-currency="RWF" onclick="setCurrency('RWF')">RWF</button>
-                        <button class="currency-btn" data-currency="USD" onclick="setCurrency('USD')">USD</button>
+                        @php
+                            $pricedCities = $service->cities->filter(fn($c) => $c->pivot->price_rwf !== null);
+                        @endphp
+                        @if($pricedCities->count() > 0)
+                            <div class="flex flex-col gap-2">
+                                @foreach($pricedCities as $city)
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm text-slate-600">{{ $city->name }}</span>
+                                        <span class="font-display text-lg font-bold text-[#0f2557]">{{ number_format($city->pivot->price_rwf) }} {{ $city->country->currency ?? 'RWF' }}</span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="text-sm text-slate-400 italic">Contact us for pricing</p>
+                        @endif
                     </div>
                 </div>
                 
@@ -157,13 +156,24 @@
                     <h3 class="font-display text-lg font-semibold text-[#0f2557] mb-2 group-hover:text-blue-600 transition-colors">
                         {{ $related->name }}
                     </h3>
-                    <div class="flex items-center justify-between">
-                        <span class="price-display font-bold text-[#0f2557]" 
-                              data-rwf="{{ $related->price_rwf }}" 
-                              data-usd="{{ $related->price_usd }}">
-                            {{ $related->formatted_price_rwf }}
-                        </span>
-                        <span class="text-sm text-slate-400">{{ $related->formatted_duration }}</span>
+                    <div class="flex flex-col gap-1 mt-2">
+                        @php
+                            $relatedPricedCities = $related->cities->filter(fn($c) => $c->pivot->price_rwf !== null);
+                        @endphp
+                        @if($relatedPricedCities->count() > 0)
+                            @foreach($relatedPricedCities->take(2) as $city)
+                                <div class="flex items-center justify-between text-sm">
+                                    <span class="text-slate-500">{{ $city->name }}</span>
+                                    <span class="font-bold text-[#0f2557]">{{ number_format($city->pivot->price_rwf) }} {{ $city->country->currency ?? 'RWF' }}</span>
+                                </div>
+                            @endforeach
+                            @if($relatedPricedCities->count() > 2)
+                                <span class="text-xs text-slate-400">+{{ $relatedPricedCities->count() - 2 }} more locations</span>
+                            @endif
+                        @else
+                            <span class="text-sm text-slate-400 italic">Contact us for pricing</span>
+                        @endif
+                        <span class="text-sm text-slate-400 mt-1">{{ $related->formatted_duration }}</span>
                     </div>
                 </div>
             </a>

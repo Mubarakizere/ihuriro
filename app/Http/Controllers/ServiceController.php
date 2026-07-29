@@ -71,11 +71,12 @@ class ServiceController extends Controller
      */
     public function show(string $slug)
     {
-        $service = Service::where('slug', $slug)->active()->firstOrFail();
+        $service = Service::where('slug', $slug)->active()->with('cities.country')->firstOrFail();
         
         $relatedServices = Service::active()
             ->where('category_id', $service->category_id)
             ->where('id', '!=', $service->id)
+            ->with('cities.country')
             ->take(3)
             ->get();
 
